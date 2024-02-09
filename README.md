@@ -1,6 +1,6 @@
 
-The program builds the Klayperon Mendeleev equation, weight it is constant 
-  m = const
+The program plots using the Clapeyron Mendeleev equation, where the weight is constant
+  m = const;
   PV = T
 
 To builds program requests intermediate changes between states. 
