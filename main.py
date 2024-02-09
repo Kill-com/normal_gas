@@ -1,20 +1,22 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+from random import randint
+
 def consol_im():
     print("Проанализируйте график и скажите")
     # PV = T
     state = int(input("Количество состоний: "))
     yes = input("Они они идут по кругу?(да\нет)\n")
     if yes.lower() == "да":
-        m = 0
+        ind = 0
     else:
-        m = 1
+        ind = 1
     pack_st = np.array([["=","=","="]])
     s = state
     print("На вопросы изменения отвечать <, >, =")
     i = 1
-    while state !=m:
+    while state != ind:
         if i+1> s:
             print(f"Состояние {i}-1")
         else:
@@ -22,8 +24,8 @@ def consol_im():
         pack_st = np.vstack((pack_st,input("Как изменилось давление? объем? температура?\n").split()))
         state -=1
         i +=1
-    if m == 0:
-        pack_st = pack_st[1:]
+    if ind == 1:
+        pack_st = np.vstack(([["0","0","0"]],pack_st[1:]))
     pack_st_i =  np.zeros((len(pack_st),3))
     for i in range(len(pack_st)):
         for m in range(3):
@@ -70,9 +72,9 @@ def consol_im():
         if a ==0:
             for i in eq:
                 pack_rafn = np.hstack((pack_rafn, [
-                    [[ sort(list(i)[0]) if b == m else -1 for m in range(3)]],
+                    [[ sort(list(i)[0]) if b == m else -1 for m in range(kl)]],
 
-                    [[int(list(i)[1])-1 if b == m else -1 for m in range(3)]]
+                    [[int(list(i)[1])-1 if b == m else -1 for m in range(kl)]]
                     ]))
         else:
             for i in eq:
@@ -81,9 +83,9 @@ def consol_im():
                     pack_rafn[1][eq.index(i)+1][b] = int(list(i)[1])-1
                 else:
                     pack_rafn = np.hstack((pack_rafn, [
-                    [[ sort(list(i)[0]) if b == m else -1 for m in range(3)]],
+                    [[ sort(list(i)[0]) if b == m else -1 for m in range(kl)]],
 
-                    [[int(list(i)[1])-1 if b == m else -1 for m in range(3)]]
+                    [[int(list(i)[1])-1 if b == m else -1 for m in range(kl)]]
                     ]))
         b+=1
         kl -=1
@@ -103,25 +105,33 @@ def correct(pack_st, pack_rafn):
     """
         pack = [[1, 2, 3]]    как (больше меньше равно) предыдущего
     """
+    ind = 0
     for y in range(len(pack_st)):
+        if pack_st[y][0] == 0:   #Значит что график не закруглен
+            ind = 1
         pack = np.vstack((pack,[[pack_st[y][0], pack_st[y][1], pack_st[y][2]]]))
-    pack_ch = np.full((len(pack), 3), 10.)   # ТУТ ТАК НАДООООО
     pack = pack[1:]
-    cor_srafn(pack_ch, pack, pack_rafn)
+    pack_ch = np.full((len(pack), 3), 10.)
+    cor_srafn(pack_ch, pack, pack_rafn, ind)
     return pack_ch
-def cor_srafn(pack_ch,pack_cnd, pack_rafn):
+def cor_srafn(pack_ch,pack_cnd, pack_rafn,ind):
     i = True
     m = -1
-    while i and m != 1000:
-        for state in range(len(pack_ch[1:])):
+    while i and m != 30:
+        if ind == 1:
+            rn = reversed(range(len(pack_ch[1:])))
+        else:
+            rn = range(len(pack_ch[1:]))
+        for state in rn:
             for per in range(3):
-                condition(state, per, pack_ch,pack_cnd, pack_rafn=pack_rafn)
-        for state in range(len(pack_ch[1:])):
+                condition(state+ind, per, pack_ch,pack_cnd,ind, pack_rafn=pack_rafn)
+        condition(len(pack_ch[1:])-1, 2,pack_ch, pack_cnd, ind, pack_rafn=pack_rafn)
+        for state in rn:
             for per in range(3):
-                condition_2(state, per, pack_ch,pack_cnd, pack_rafn)
+                condition_2(state+ind, per, pack_ch,pack_cnd,ind, pack_rafn)
         i = start_equement(pack_rafn,pack_ch)
         m+=1
-        print(m)
+    print(m)
 def start_equement(pack_rafn,pack_ch):
     p = 0
     for el in pack_rafn.transpose():
@@ -131,7 +141,11 @@ def start_equement(pack_rafn,pack_ch):
     else:
         return True
 
-def condition(state, per, pack_ch, cnd_pack, m=0, pack_rafn = None):
+def condition(state, per, pack_ch, cnd_pack, ind, m=0, pack_rafn = None):
+    # print(f"\n{ind}")
+    # print(f"{state}\n")
+    if ind ==1 and state-1 <0:
+        state = len(pack_ch)-1
     p = 0  #Параметр изменения числа
     ch = pack_ch[state][per]
     ch_1 = pack_ch[state-1][per]
@@ -139,43 +153,47 @@ def condition(state, per, pack_ch, cnd_pack, m=0, pack_rafn = None):
     # print(pack_cnd)
     if cnd == 1:
         if ch >= ch_1:
-            pack_ch[state][per] = (ch - 2)
+            if ch-ch_1 <1:
+                raz = 1
+            else:
+                raz = ch-ch_1
+            pack_ch[state][per] = ch - randint(3,6)*(raz)
             p +=1
     elif cnd == 2:
         if ch <= ch_1:
-            pack_ch[state][per] = (ch+2)
+            if ch_1-ch <1:
+                raz = 1
+            else:
+                raz = ch_1-ch
+            pack_ch[state][per] =  ch + randint(3,6)*(raz)
             p +=1
     if p > 0:
-        condition(state-1, per,pack_ch, cnd_pack)
+        condition(state-1, per,pack_ch, cnd_pack, ind)
         if m == 1:
-            condition_2(state-1, per, pack_ch, cnd_pack, pack_rafn)
+            condition_2(state-1, per, pack_ch, cnd_pack,ind, pack_rafn)
         if m ==2:
-            condition_2(state-1, per, pack_ch, cnd_pack,pack_rafn)
-            start_equement(pack_rafn, pack_ch)
-def condition_2(state, per, pack_ch, cnd_pack, pack_rafn):
+            condition_2(state-1, per, pack_ch, cnd_pack,ind,pack_rafn)
+            condition_equement(pack_rafn, pack_ch)
+def condition_2(state, per, pack_ch, cnd_pack, ind, pack_rafn):
+    if ind ==1 and state-1 <0:
+        state = len(pack_ch)-2
     p = 0  #Параметр изменения числа
     ch = pack_ch[state][per]
     ch_1 = pack_ch[state-1][per]
     cnd=cnd_pack[state][per]
     if cnd == 3:
         if ch != ch_1:
-            x = (ch+ch_1)/2
-            pack_ch[state][per] = x
-            pack_ch[state-1][per] = x
+            # x = (ch+ch_1)/2
+            # pack_ch[state-1][per] = x
+            pack_ch[state][per] = ch_1
             p +=1
     if p > 0:
-        condition(state-1, per,pack_ch, cnd_pack, 1, pack_rafn)
+        condition(state-1, per,pack_ch, cnd_pack,ind, 1, pack_rafn)
 def condition_equement(el, pack):
     lst_ch = []
     p = 0
     for stolb in el:
-        if stolb[1] != -1 and stolb[0] != -1:
-            print(pack)
-            print(stolb)
-            lst_ch.append(pack[stolb[1]][stolb[0]])
-    print(lst_ch)
-    print(max(lst_ch))
-    print(min(lst_ch))
+        lst_ch.append(pack[stolb[1]][stolb[0]])
     x = (max(lst_ch)+min(lst_ch))/2
     for stolb in el:
         if pack[stolb[1]][stolb[0]] != x:
@@ -196,19 +214,10 @@ def create():
     pack_ch = correct(pack_st, pack_rafn)
     xy=do_cord(pack_ch)
     print(xy)
-    plt.plot(xy[0],xy[1])
+    plt.plot(xy[1],xy[0])
     plt.show()
 
         
 if __name__ == "__main__":
     create()
-    # x = np.array([[[1,0],[2,3],[4,5]],[[1,1],[6,7],[8,9]]])
-    # print(np.array([[[3, 2, 1]],*[[[-1,-1,-1]] for i in range(3)]]))
-    # x = np.array([[1,2,3], [3,4,5], [0,0,0]]);print(x)
-    # print(0 != -1)
-    # print(np.zeros((3, 2)))
-    # print(x.tolist())
-
-
-    
-
+    # print(randint(1,10))
