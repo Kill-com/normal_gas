@@ -183,8 +183,6 @@ def condition_2(state, per, pack_ch, cnd_pack, ind, pack_rafn):
     cnd=cnd_pack[state][per]
     if cnd == 3:
         if ch != ch_1:
-            # x = (ch+ch_1)/2
-            # pack_ch[state-1][per] = x
             pack_ch[state][per] = ch_1
             p +=1
     if p > 0:
@@ -201,20 +199,25 @@ def condition_equement(el, pack):
             p = 1
     return p
     
-def do_cord(pack_ch):
-    pr = input("В каких плоскостях находиться график(через пробел)\n").split()
-    pr = [sort(pr[0]), sort(pr[1])]
+def do_cord(pack_ch, pr_0, pr_1):
     print(pack_ch)
-    if 3 in pr:
-        return np.array(pack_ch[:,pr[0]]), np.array(pack_ch[:,pr[1]])
+    if 3 in [pr_0, pr_1]:
+        return np.array(pack_ch[:,pr_0]), np.array(pack_ch[:,pr_1])
     else:
-        return np.array(pack_ch[:,pr[0]]), np.array(pack_ch[:,pr[1]])
+        return np.array(pack_ch[:,pr_0]), np.array(pack_ch[:,pr_1])
 def create():
     pack_st, pack_rafn= consol_im()
     pack_ch = correct(pack_st, pack_rafn)
-    xy=do_cord(pack_ch)
-    print(xy)
-    plt.plot(xy[1],xy[0])
+    fig = plt.figure()
+    ax1 = fig.add_subplot(221)
+    xy=do_cord(pack_ch, 1, 2)
+    ax1.plot(xy[1],xy[0])
+    ax2 = fig.add_subplot(222)
+    xy=do_cord(pack_ch, 0, 2)
+    ax2.plot(xy[1],xy[0])
+    ax3 = fig.add_subplot(223)
+    xy=do_cord(pack_ch, 0, 1)
+    ax3.plot(xy[1],xy[0])
     plt.show()
 
         
