@@ -117,7 +117,7 @@ def correct(pack_st, pack_rafn):
 def cor_srafn(pack_ch,pack_cnd, pack_rafn,ind):
     i = True
     m = -1
-    while i and m != 30:
+    while (i or m!=2) and m != 30:
         if ind == 1:
             rn = reversed(range(len(pack_ch[1:])))
         else:
@@ -125,21 +125,20 @@ def cor_srafn(pack_ch,pack_cnd, pack_rafn,ind):
         for state in rn:
             for per in range(3):
                 condition(state+ind, per, pack_ch,pack_cnd,ind, pack_rafn=pack_rafn)
-        condition(len(pack_ch[1:])-1, 2,pack_ch, pack_cnd, ind, pack_rafn=pack_rafn)
         for state in rn:
             for per in range(3):
                 condition_2(state+ind, per, pack_ch,pack_cnd,ind, pack_rafn)
+        condition(len(pack_ch[1:])-1, 2,pack_ch, pack_cnd, ind, m = 2,pack_rafn=pack_rafn)
         i = start_equement(pack_rafn,pack_ch)
         m+=1
     print(m)
 def start_equement(pack_rafn,pack_ch):
     p = 0
+    p += correct_formul(pack_ch)    
     for el in pack_rafn.transpose():
         p += condition_equement(el,pack_ch)
     if p == 0:
         return False
-    else:
-        return True
 
 def condition(state, per, pack_ch, cnd_pack, ind, m=0, pack_rafn = None):
     # print(f"\n{ind}")
@@ -172,8 +171,8 @@ def condition(state, per, pack_ch, cnd_pack, ind, m=0, pack_rafn = None):
         if m == 1:
             condition_2(state-1, per, pack_ch, cnd_pack,ind, pack_rafn)
         if m ==2:
+            start_equement(pack_rafn, pack_ch)
             condition_2(state-1, per, pack_ch, cnd_pack,ind,pack_rafn)
-            condition_equement(pack_rafn, pack_ch)
 def condition_2(state, per, pack_ch, cnd_pack, ind, pack_rafn):
     if ind ==1 and state-1 <0:
         state = len(pack_ch)-2
@@ -187,6 +186,41 @@ def condition_2(state, per, pack_ch, cnd_pack, ind, pack_rafn):
             p +=1
     if p > 0:
         condition(state-1, per,pack_ch, cnd_pack,ind, 1, pack_rafn)
+def correct_formul(pack_ch):
+    """
+    formul:
+        R = 8.3 = const
+        start formul
+        P1*V1 = k*T1*R
+        receiving K
+        k = (P1*V1)/(T1*R)
+        Correct
+        P2 = k*R*T1/V1
+        V2 = k*R*T1/P1
+        T2 = P1*V1/k*R
+    """
+    R = 8.3
+    p = 0
+    for state in range(len(pack_ch)):
+        P1 = pack_ch[state][0]
+        V1 = pack_ch[state][1]
+        T1 = pack_ch[state][2]
+        if T1 == 0:
+            if P1*V2 == 0:
+                k = 1
+            else:
+                k = (P1*V1)/R
+        else:
+            k = (P1*V1)/(T1*R)
+        if k !=1:
+            P2 = round((k*R*T1)/V1, 1)
+            V2 = round((k*R*T1)/P1, 1)
+            T2 = round((P1*V1)/(k*R), 1)
+            pack_ch[state][0] = P2
+            pack_ch[state][1] = V2
+            pack_ch[state][2] = T2
+            p+=1
+    return p
 def condition_equement(el, pack):
     lst_ch = []
     p = 0
@@ -198,7 +232,7 @@ def condition_equement(el, pack):
             pack[stolb[1]][stolb[0]] = x
             p = 1
     return p
-    
+
 def do_cord(pack_ch, pr_0, pr_1):
     print(pack_ch)
     if 3 in [pr_0, pr_1]:
@@ -210,10 +244,10 @@ def create():
     pack_ch = correct(pack_st, pack_rafn)
     fig = plt.figure()
     ax1 = fig.add_subplot(221)
-    xy=do_cord(pack_ch, 1, 2)
+    xy=do_cord(pack_ch, 0, 2)
     ax1.plot(xy[1],xy[0])
     ax2 = fig.add_subplot(222)
-    xy=do_cord(pack_ch, 0, 2)
+    xy=do_cord(pack_ch, 1, 2)
     ax2.plot(xy[1],xy[0])
     ax3 = fig.add_subplot(223)
     xy=do_cord(pack_ch, 0, 1)
@@ -224,3 +258,4 @@ def create():
 if __name__ == "__main__":
     create()
     # print(randint(1,10))
+    # print(round(0.05, 10000))
